@@ -71,9 +71,17 @@ export default function AnimeCard({ anime, onSelect }) {
 
       {/* Info Area */}
       <div className="p-3.5 flex flex-col flex-1 justify-between gap-2">
-        <h4 className="font-semibold text-sm leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors" title={title}>
-          {title}
-        </h4>
+        <div className="space-y-1">
+          <h4 className="font-semibold text-sm leading-tight text-foreground line-clamp-2 group-hover:text-primary transition-colors" title={title}>
+            {title}
+          </h4>
+          {(anime.studios?.[0]?.name || (anime.season && anime.year)) && (
+            <span className="text-[10px] text-muted-foreground/80 block truncate">
+              {anime.studios?.[0]?.name || 'Unknown Studio'}
+              {anime.season && anime.year ? ` • ${anime.season.charAt(0).toUpperCase() + anime.season.slice(1)} ${anime.year}` : ''}
+            </span>
+          )}
+        </div>
         
         {/* Genre Tags Snippet */}
         {anime.genres && anime.genres.length > 0 && (

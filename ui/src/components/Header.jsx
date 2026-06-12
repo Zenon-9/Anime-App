@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Heart, Sun, Moon, Compass, Loader2, LogOut, LogIn, Calendar, ArrowLeftRight } from 'lucide-react';
+import { Search, Heart, Sun, Moon, Compass, Loader2, LogOut, LogIn, Calendar, ArrowLeftRight, User, BookOpen } from 'lucide-react';
 import { useJikan } from '@/hooks/useJikan';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -99,6 +99,26 @@ export default function Header({ currentPage, setCurrentPage, onSearch, onSelect
           >
             <Compass size={16} />
             <span>Discover</span>
+          </Button>
+
+          <Button 
+            variant={currentPage === 'characters' ? 'default' : 'ghost'} 
+            size="sm"
+            onClick={() => { setCurrentPage('characters'); setSearchQuery(''); }}
+            className="flex items-center gap-1.5"
+          >
+            <User size={16} />
+            <span>Characters</span>
+          </Button>
+
+          <Button 
+            variant={currentPage === 'manga' ? 'default' : 'ghost'} 
+            size="sm"
+            onClick={() => { setCurrentPage('manga'); setSearchQuery(''); }}
+            className="flex items-center gap-1.5"
+          >
+            <BookOpen size={16} />
+            <span>Manga</span>
           </Button>
 
           <Button 
@@ -217,6 +237,14 @@ export default function Header({ currentPage, setCurrentPage, onSearch, onSelect
                   <DropdownMenuItem onClick={() => { setCurrentPage('watchlist'); setSearchQuery(''); }}>
                     <Heart size={13} className="mr-2" />
                     <span>My Watchlist</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setCurrentPage('characters'); setSearchQuery(''); }}>
+                    <User size={13} className="mr-2" />
+                    <span>Characters</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setCurrentPage('manga'); setSearchQuery(''); }}>
+                    <BookOpen size={13} className="mr-2" />
+                    <span>Manga Catalog</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setCurrentPage('calendar'); setSearchQuery(''); }}>
                     <Calendar size={13} className="mr-2" />

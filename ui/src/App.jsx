@@ -14,6 +14,10 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import CalendarPage from './pages/CalendarPage';
 import ComparePage from './pages/ComparePage';
+import CharactersPage from './pages/CharactersPage';
+import CharacterDetailModal from './components/CharacterDetailModal';
+import MangaPage from './pages/MangaPage';
+import MangaDetailModal from './components/MangaDetailModal';
 import { Button } from './components/ui/button';
 import { Skeleton } from './components/ui/skeleton';
 import { ChevronLeft, ChevronRight, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -33,6 +37,8 @@ function MainApp() {
   const [currentPage, setCurrentPage] = useState('landing'); // 'landing' is default
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnimeId, setSelectedAnimeId] = useState(null);
+  const [selectedCharacterId, setSelectedCharacterId] = useState(null);
+  const [selectedMangaId, setSelectedMangaId] = useState(null);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [animeList, setAnimeList] = useState([]);
   const [pagination, setPagination] = useState({ has_next_page: false, last_visible_page: 1 });
@@ -187,9 +193,22 @@ function MainApp() {
           />
         )}
 
+        {currentPage === 'characters' && (
+          <CharactersPage 
+            onSelectCharacter={setSelectedCharacterId}
+          />
+        )}
+
+        {currentPage === 'manga' && (
+          <MangaPage 
+            onSelectManga={setSelectedMangaId}
+          />
+        )}
+
         {currentPage === 'compare' && (
           <ComparePage 
             onSelectAnime={setSelectedAnimeId}
+            onSelectCharacter={setSelectedCharacterId}
           />
         )}
 
@@ -298,6 +317,32 @@ function MainApp() {
       <AnimeDetailModal
         animeId={selectedAnimeId}
         onClose={() => setSelectedAnimeId(null)}
+        onSelectCharacter={setSelectedCharacterId}
+      />
+
+      {/* Global Character Details Modal dialog */}
+      <CharacterDetailModal
+        characterId={selectedCharacterId}
+        onClose={() => setSelectedCharacterId(null)}
+        onSelectAnime={(animeId) => {
+          setSelectedCharacterId(null);
+          setTimeout(() => {
+            setSelectedAnimeId(animeId);
+          }, 50);
+        }}
+        onSelectManga={(mangaId) => {
+          setSelectedCharacterId(null);
+          setTimeout(() => {
+            setSelectedMangaId(mangaId);
+          }, 50);
+        }}
+      />
+
+      {/* Global Manga Details Modal dialog */}
+      <MangaDetailModal
+        mangaId={selectedMangaId}
+        onClose={() => setSelectedMangaId(null)}
+        onSelectCharacter={setSelectedCharacterId}
       />
 
       {/* Footer Branding */}

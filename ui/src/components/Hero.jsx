@@ -124,6 +124,16 @@ export default function Hero({ onSelectAnime }) {
               <Clock size={12} />
               <span>{currentAnime.type || 'TV'}</span>
             </span>
+            {currentAnime.studios?.[0]?.name && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/65 text-muted-foreground border border-border/30 text-xs font-semibold">
+                <span>{currentAnime.studios[0].name}</span>
+              </span>
+            )}
+            {currentAnime.season && currentAnime.year && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/65 text-muted-foreground border border-border/30 text-xs font-semibold">
+                <span className="capitalize">{currentAnime.season} {currentAnime.year}</span>
+              </span>
+            )}
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15] mb-4 line-clamp-2 font-heading drop-shadow-md">

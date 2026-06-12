@@ -12,11 +12,12 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
-export default function AnimeDetailModal({ animeId, onClose }) {
+export default function AnimeDetailModal({ animeId, onClose, onSelectCharacter }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [details, setDetails] = useState(null);
   const [characters, setCharacters] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   const { getWatchlistItem, addToWatchlist, updateWatchlistItem, removeFromWatchlist } = useWatchlist();
   const { user } = useAuth();
@@ -40,6 +41,7 @@ export default function AnimeDetailModal({ animeId, onClose }) {
       setDetails(null);
       setCharacters([]);
       setRecommendations([]);
+      setReviews([]);
       setActiveTab('overview');
     });
 
@@ -60,6 +62,12 @@ export default function AnimeDetailModal({ animeId, onClose }) {
       const recRes = await request(`/anime/${animeId}/recommendations`);
       if (recRes && recRes.data) {
         setRecommendations(recRes.data.slice(0, 6)); // top 6 recs
+      }
+
+      // 4. Fetch reviews
+      const reviewRes = await request(`/anime/${animeId}/reviews`);
+      if (reviewRes && reviewRes.data) {
+        setReviews(reviewRes.data.slice(0, 4)); // top 4 reviews
       }
     }
 
@@ -302,7 +310,7 @@ export default function AnimeDetailModal({ animeId, onClose }) {
 
               {/* Tabs Navbar */}
               <div className="flex border-b border-border/40 gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap pb-px">
-                {['overview', 'media', 'characters', 'recommendations'].map((tab) => (
+                {['overview', 'media', 'characters', 'recommendations', 'reviews'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -397,15 +405,19 @@ export default function AnimeDetailModal({ animeId, onClose }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
                     {characters.length > 0 ? (
                       characters.map((item) => (
-                        <div key={item.character.mal_id} className="flex items-center gap-3 p-2.5 rounded-xl border bg-muted/10 relative overflow-hidden">
+                        <div 
+                          key={item.character.mal_id} 
+                          className="flex items-center gap-3 p-2.5 rounded-xl border bg-muted/10 hover:bg-muted/20 hover:border-primary/30 transition-all duration-300 relative overflow-hidden cursor-pointer group"
+                          onClick={() => onSelectCharacter(item.character.mal_id)}
+                        >
                           <img 
                             src={item.character.images?.jpg?.image_url} 
                             alt="" 
-                            className="w-12 h-12 rounded-lg object-cover bg-muted flex-shrink-0"
+                            className="w-12 h-12 rounded-lg object-cover bg-muted flex-shrink-0 group-hover:scale-105 transition-transform"
                             loading="lazy"
                           />
-                          <div className="flex flex-col min-w-0 pr-12">
-                            <span className="font-bold text-sm text-foreground truncate">{item.character.name}</span>
+                          <div className="flex flex-col min-w-0 pr-12 flex-grow">
+                            <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate">{item.character.name}</span>
                             <span className="text-[10px] text-muted-foreground">{item.role} Character</span>
                             {item.voice_actors && item.voice_actors.length > 0 && (
                               <span className="text-xs text-primary font-medium truncate mt-1">
@@ -462,6 +474,51 @@ export default function AnimeDetailModal({ animeId, onClose }) {
                       })
                     ) : (
                       <p className="text-sm text-muted-foreground text-center col-span-6 py-8">No recommendation links available.</p>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <div className="flex flex-col gap-4 animate-fade-in max-h-[400px] overflow-y-auto pr-1">
+                    {reviews.length > 0 ? (
+                      reviews.map((rev, idx) => {
+                        const formattedDate = rev.date ? new Date(rev.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown Date';
+                        const userImg = rev.user?.images?.jpg?.image_url;
+                        return (
+                          <div key={idx} className="flex flex-col gap-3 p-4 rounded-2xl border bg-muted/10">
+                            <div className="flex justify-between items-center flex-wrap gap-2">
+                              <div className="flex items-center gap-3">
+                                {userImg ? (
+                                  <img 
+                                    src={userImg} 
+                                    alt="" 
+                                    className="w-9 h-9 rounded-full object-cover border bg-muted"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs border">
+                                    {rev.user?.username?.charAt(0).toUpperCase() || 'U'}
+                                  </div>
+                                )}
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-xs text-foreground">{rev.user?.username || 'Anonymous'}</span>
+                                  <span className="text-[10px] text-muted-foreground">{formattedDate}</span>
+                                </div>
+                              </div>
+                              {rev.score && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase">
+                                  ★ {rev.score}/10
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground whitespace-pre-line bg-muted/5 p-3 rounded-xl border border-border/20">
+                              {rev.review || 'No review content.'}
+                            </p>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-8 italic">No user reviews archived for this entry.</p>
                     )}
                   </div>
                 )}

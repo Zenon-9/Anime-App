@@ -5,9 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ArrowLeftRight, X, Search, Loader2 } from 'lucide-react';
 
-export default function ComparePage({ onSelectAnime }) {
+export default function ComparePage({ onSelectAnime, onSelectCharacter }) {
   const [slotA, setSlotA] = useState(null);
   const [slotB, setSlotB] = useState(null);
+  
+  const [charsA, setCharsA] = useState([]);
+  const [charsB, setCharsB] = useState([]);
+  const [loadingCharacters, setLoadingCharacters] = useState(false);
   
   const [activeSearchSlot, setActiveSearchSlot] = useState(null); // 'A' or 'B' or null
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +72,50 @@ export default function ComparePage({ onSelectAnime }) {
     const temp = slotA;
     setSlotA(slotB);
     setSlotB(temp);
+    
+    const tempChars = charsA;
+    setCharsA(charsB);
+    setCharsB(tempChars);
   };
+
+  useEffect(() => {
+    async function fetchCharacters() {
+      if (!slotA && !slotB) {
+        setCharsA([]);
+        setCharsB([]);
+        return;
+      }
+      setLoadingCharacters(true);
+      try {
+        if (slotA) {
+          const charResA = await request(`/anime/${slotA.mal_id}/characters`);
+          if (charResA && charResA.data) {
+            setCharsA(charResA.data.slice(0, 8));
+          } else {
+            setCharsA([]);
+          }
+        } else {
+          setCharsA([]);
+        }
+
+        if (slotB) {
+          const charResB = await request(`/anime/${slotB.mal_id}/characters`);
+          if (charResB && charResB.data) {
+            setCharsB(charResB.data.slice(0, 8));
+          } else {
+            setCharsB([]);
+          }
+        } else {
+          setCharsB([]);
+        }
+      } catch (err) {
+        console.error("Error fetching characters for matchup:", err);
+      } finally {
+        setLoadingCharacters(false);
+      }
+    }
+    fetchCharacters();
+  }, [slotA?.mal_id, slotB?.mal_id, request]);
 
   // Helper to determine winner (higher score, lower rank/popularity since lower is better)
   const compareStats = (valA, valB, type = 'higher-better') => {
@@ -147,6 +194,7 @@ export default function ComparePage({ onSelectAnime }) {
                   </h3>
                   <span className="text-xs text-muted-foreground mt-1 block">
                     {slotA.studios?.[0]?.name || 'Unknown Studio'} • {slotA.type}
+                    {slotA.season && slotA.year ? ` • ${slotA.season.charAt(0).toUpperCase() + slotA.season.slice(1)} ${slotA.year}` : ''}
                   </span>
                 </div>
               </CardContent>
@@ -202,6 +250,7 @@ export default function ComparePage({ onSelectAnime }) {
                   </h3>
                   <span className="text-xs text-muted-foreground mt-1 block">
                     {slotB.studios?.[0]?.name || 'Unknown Studio'} • {slotB.type}
+                    {slotB.season && slotB.year ? ` • ${slotB.season.charAt(0).toUpperCase() + slotB.season.slice(1)} ${slotB.year}` : ''}
                   </span>
                 </div>
               </CardContent>
@@ -255,11 +304,25 @@ export default function ComparePage({ onSelectAnime }) {
                     alt="" 
                     className="w-10 h-14 object-cover rounded-md bg-muted flex-shrink-0"
                   />
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 flex-grow">
                     <span className="font-semibold text-sm truncate text-foreground">{anime.title}</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">
-                      {anime.type || 'TV'} ({anime.episodes || '?'} ep) • ★ {anime.score || 'N/A'}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                      <span>{anime.type || 'TV'} ({anime.episodes || '?'} ep)</span>
+                      <span>•</span>
+                      <span className="text-[#fbbf24] font-medium">★ {anime.score || 'N/A'}</span>
+                      {(anime.studios?.[0]?.name || (anime.season && anime.year)) && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate max-w-[150px]">{anime.studios?.[0]?.name || 'Unknown Studio'}</span>
+                          {anime.season && anime.year && (
+                            <>
+                              <span>•</span>
+                              <span className="capitalize">{anime.season} {anime.year}</span>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -402,6 +465,90 @@ export default function ComparePage({ onSelectAnime }) {
                 </div>
                 <div className="p-4 rounded-xl border bg-muted/10 h-44 overflow-y-auto">
                   {slotB.synopsis || 'No synopsis available.'}
+                </div>
+              </div>
+            </div>
+
+            {/* Characters side-by-side */}
+            <div className="flex flex-col gap-2.5 border-t border-border/40 pt-6">
+              <div className="text-center text-xs uppercase font-bold text-muted-foreground mb-4">
+                Main Cast & Characters Comparison
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Slot A Characters */}
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-xs font-semibold text-foreground/80 mb-1 flex items-center gap-1.5 justify-center md:justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    <span className="truncate max-w-[250px]">{slotA.title} Main Cast</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
+                    {charsA.length > 0 ? (
+                      charsA.slice(0, 4).map((item) => (
+                        <div 
+                          key={item.character.mal_id} 
+                          className="flex items-center gap-2.5 p-2 rounded-xl border bg-muted/10 hover:bg-muted/20 hover:border-primary/35 hover:scale-[1.02] cursor-pointer transition-all duration-300 group"
+                          onClick={() => onSelectCharacter(item.character.mal_id)}
+                        >
+                          <img 
+                            src={item.character.images?.jpg?.image_url} 
+                            alt="" 
+                            className="w-10 h-10 rounded-lg object-cover bg-muted flex-shrink-0 border border-border/40 group-hover:scale-105 transition-transform"
+                            loading="lazy"
+                          />
+                          <div className="flex flex-col min-w-0 flex-grow">
+                            <span className="font-bold text-[11px] text-foreground group-hover:text-primary transition-colors truncate" title={item.character.name}>
+                              {item.character.name}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground tracking-wider uppercase font-semibold">
+                              {item.role}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 text-center py-6 text-xs text-muted-foreground italic bg-muted/5 rounded-xl border border-dashed">
+                        {loadingCharacters ? 'Retrieving character archives...' : 'No character records found.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Slot B Characters */}
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-xs font-semibold text-foreground/80 mb-1 flex items-center gap-1.5 justify-center md:justify-start">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                    <span className="truncate max-w-[250px]">{slotB.title} Main Cast</span>
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
+                    {charsB.length > 0 ? (
+                      charsB.slice(0, 4).map((item) => (
+                        <div 
+                          key={item.character.mal_id} 
+                          className="flex items-center gap-2.5 p-2 rounded-xl border bg-muted/10 hover:bg-muted/20 hover:border-primary/35 hover:scale-[1.02] cursor-pointer transition-all duration-300 group"
+                          onClick={() => onSelectCharacter(item.character.mal_id)}
+                        >
+                          <img 
+                            src={item.character.images?.jpg?.image_url} 
+                            alt="" 
+                            className="w-10 h-10 rounded-lg object-cover bg-muted flex-shrink-0 border border-border/40 group-hover:scale-105 transition-transform"
+                            loading="lazy"
+                          />
+                          <div className="flex flex-col min-w-0 flex-grow">
+                            <span className="font-bold text-[11px] text-foreground group-hover:text-primary transition-colors truncate" title={item.character.name}>
+                              {item.character.name}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground tracking-wider uppercase font-semibold">
+                              {item.role}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 text-center py-6 text-xs text-muted-foreground italic bg-muted/5 rounded-xl border border-dashed">
+                        {loadingCharacters ? 'Retrieving character archives...' : 'No character records found.'}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
