@@ -85,8 +85,19 @@ export default function CharacterDetailModal({ characterId, onClose, onSelectAni
       closedby="any"
       aria-labelledby="char-dialog-title"
       onClose={handleClose}
-      className="m-auto max-h-[85vh] w-[92%] max-w-[850px] rounded-3xl border bg-card text-card-foreground shadow-2xl overflow-y-auto animate-fade-in p-0 outline-none backdrop:backdrop-blur-md backdrop:bg-background/80 z-50"
+      className="fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none border-0 bg-background text-foreground overflow-y-auto animate-fade-in p-0 outline-none m-0 z-50 backdrop:bg-transparent"
     >
+      {/* Floating Close Button */}
+      <Button 
+        onClick={handleClose} 
+        variant="outline"
+        size="icon"
+        className="fixed top-6 right-6 sm:right-10 rounded-full w-10 h-10 bg-background/70 border backdrop-blur-md text-foreground cursor-pointer hover:rotate-90 hover:scale-105 transition-all duration-300 z-50 shadow-md"
+        aria-label="Close Character Modal"
+      >
+        <X size={20} />
+      </Button>
+
       {loading && !details ? (
         <div className="flex flex-col items-center justify-center min-h-[350px] gap-4">
           <Loader2 className="animate-spin text-primary" size={40} />
@@ -98,29 +109,19 @@ export default function CharacterDetailModal({ characterId, onClose, onSelectAni
           <Button onClick={handleClose}>Close Dialog</Button>
         </div>
       ) : details ? (
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-screen">
           {/* Header Banner Background */}
-          <div className="relative h-40 overflow-hidden">
+          <div className="relative h-64 overflow-hidden">
             <img
               src={characterImage}
               alt=""
               className="w-full h-full object-cover blur-[18px] brightness-[0.3] scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent"></div>
-
-            <Button
-              onClick={handleClose}
-              variant="outline"
-              size="icon"
-              className="absolute top-4 right-4 rounded-full w-9 h-9 bg-background/50 border-muted text-foreground cursor-pointer hover:rotate-90 transition-transform duration-300 z-50"
-              aria-label="Close Character Modal"
-            >
-              <X size={18} />
-            </Button>
+            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
           </div>
 
           {/* Character Info Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] px-6 sm:px-10 pb-10 gap-8 -mt-20 relative z-10">
+          <div className="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-[220px_1fr] px-6 sm:px-10 pb-16 gap-10 -mt-24 relative z-10">
             {/* Left Column: Portrait & Metadata */}
             <div className="flex flex-col gap-4">
               <img

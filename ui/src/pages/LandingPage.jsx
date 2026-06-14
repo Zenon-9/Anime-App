@@ -4,12 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useJikan } from '@/hooks/useJikan';
 import { useAuth } from '@/context/AuthContext';
-import { Sparkles, Library, PieChart, Star, Compass, UserPlus, ShieldCheck, Heart } from 'lucide-react';
+import { useWatchlist } from '@/context/WatchlistContext';
+import { Sparkles, Library, PieChart, Star, Compass, UserPlus, ShieldCheck, Heart, Plus, Check } from 'lucide-react';
 
 export default function LandingPage({ setCurrentPage, onSelectAnime }) {
   const [trends, setTrends] = useState([]);
   const { loading, request } = useJikan();
   const { user } = useAuth();
+  const { getWatchlistItem, addToWatchlist, removeFromWatchlist } = useWatchlist();
 
   useEffect(() => {
     async function getLandingTrends() {
@@ -147,36 +149,63 @@ export default function LandingPage({ setCurrentPage, onSelectAnime }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {trends.map((anime) => (
-              <div 
-                key={anime.mal_id} 
-                onClick={() => onSelectAnime(anime.mal_id)}
-                className="group cursor-pointer flex flex-col gap-3"
-              >
-                <div className="relative overflow-hidden rounded-xl aspect-[3/4] border bg-muted">
-                  <img 
-                    src={anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url} 
-                    alt={anime.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  {anime.score && (
-                    <div className="absolute top-3 left-3 px-2 py-1 rounded-md bg-background/80 backdrop-blur-md border border-border/50 flex items-center gap-1 text-[#fbbf24] text-xs font-bold shadow-sm">
-                      <Star size={12} fill="currentColor" />
-                      <span>{anime.score.toFixed(1)}</span>
-                    </div>
-                  )}
+            {trends.map((anime) => {
+              const watchlistItem = getWatchlistItem(anime.mal_id);
+              const isSaved = !!watchlistItem;
+
+              const handleQuickAction = (e) => {
+                e.stopPropagation();
+                if (isSaved) {
+                  removeFromWatchlist(anime.mal_id);
+                } else {
+                  addToWatchlist(anime, 'Plan to Watch');
+                }
+              };
+
+              return (
+                <div 
+                  key={anime.mal_id} 
+                  onClick={() => onSelectAnime(anime.mal_id)}
+                  className="group cursor-pointer flex flex-col gap-3"
+                >
+                  <div className="relative overflow-hidden rounded-xl aspect-[3/4] border bg-muted">
+                    <img 
+                      src={anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url} 
+                      alt={anime.title}
+                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    {anime.score && (
+                      <div className="absolute top-3 left-3 px-2 py-1 rounded-md bg-background/80 backdrop-blur-md border border-border/50 flex items-center gap-1 text-[#fbbf24] text-xs font-bold shadow-sm">
+                        <Star size={12} fill="currentColor" />
+                        <span>{anime.score.toFixed(1)}</span>
+                      </div>
+                    )}
+
+                    {/* Quick Watchlist Toggle */}
+                    <Button 
+                      onClick={handleQuickAction}
+                      variant={isSaved ? 'secondary' : 'outline'}
+                      size="icon"
+                      className={`absolute top-3 right-3 w-8 h-8 rounded-full shadow-sm bg-background/70 backdrop-blur-md border-border/50 cursor-pointer hover:scale-110 transition-transform ${
+                        isSaved ? 'bg-secondary text-primary border-primary/40' : 'text-foreground'
+                      }`}
+                      title={isSaved ? `Saved (${watchlistItem.status})` : 'Add to Plan to Watch'}
+                    >
+                      {isSaved ? <Check size={15} /> : <Plus size={15} />}
+                    </Button>
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors text-card-foreground">
+                      {anime.title}
+                    </h3>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {anime.type || 'TV'} • {anime.episodes || '?'} ep
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors text-card-foreground">
-                    {anime.title}
-                  </h3>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {anime.type || 'TV'} • {anime.episodes || '?'} ep
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

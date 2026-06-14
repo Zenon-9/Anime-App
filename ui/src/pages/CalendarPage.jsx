@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useJikan } from '@/hooks/useJikan';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Calendar, Star, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, Star, Clock, AlertCircle, Plus, Check } from 'lucide-react';
+import { useWatchlist } from '@/context/WatchlistContext';
 
 const WEEKDAYS = [
   { label: 'Monday', value: 'monday' },
@@ -22,6 +23,7 @@ export default function CalendarPage({ onSelectAnime }) {
   });
   const [scheduleList, setScheduleList] = useState([]);
   const { loading, error, request } = useJikan();
+  const { getWatchlistItem, addToWatchlist, removeFromWatchlist } = useWatchlist();
 
   useEffect(() => {
     async function fetchSchedules() {
@@ -102,11 +104,23 @@ export default function CalendarPage({ onSelectAnime }) {
             const score = anime.score ? anime.score.toFixed(1) : 'N/A';
             const title = anime.title || anime.title_english || anime.title_japanese;
 
+            const watchlistItem = getWatchlistItem(anime.mal_id);
+            const isSaved = !!watchlistItem;
+
+            const handleQuickAction = (e) => {
+              e.stopPropagation();
+              if (isSaved) {
+                removeFromWatchlist(anime.mal_id);
+              } else {
+                addToWatchlist(anime, 'Plan to Watch');
+              }
+            };
+
             return (
               <div 
                 key={anime.mal_id}
                 onClick={() => onSelectAnime(anime.mal_id)}
-                className="flex gap-4 p-4 border rounded-2xl bg-card/45 shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+                className="flex gap-4 p-4 border rounded-2xl bg-card/45 shadow-sm hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group relative"
               >
                 <img 
                   src={anime.images?.jpg?.image_url} 
@@ -115,7 +129,7 @@ export default function CalendarPage({ onSelectAnime }) {
                   loading="lazy"
                 />
                 
-                <div className="flex flex-col justify-between min-w-0 flex-grow">
+                <div className="flex flex-col justify-between min-w-0 flex-grow pr-8">
                   <div className="space-y-1">
                     <h3 className="font-bold text-sm leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2" title={title}>
                       {title}
@@ -137,6 +151,19 @@ export default function CalendarPage({ onSelectAnime }) {
                     </span>
                   </div>
                 </div>
+
+                {/* Quick Watchlist Toggle */}
+                <Button 
+                  onClick={handleQuickAction}
+                  variant={isSaved ? 'secondary' : 'outline'}
+                  size="icon"
+                  className={`absolute top-4 right-4 w-7 h-7 rounded-full shadow-sm bg-background/70 backdrop-blur-md border-border/50 cursor-pointer hover:scale-110 transition-transform ${
+                    isSaved ? 'bg-secondary text-primary border-primary/40' : 'text-foreground'
+                  }`}
+                  title={isSaved ? `Saved (${watchlistItem.status})` : 'Add to Plan to Watch'}
+                >
+                  {isSaved ? <Check size={13} /> : <Plus size={13} />}
+                </Button>
               </div>
             );
           })}

@@ -3,7 +3,7 @@ import { X, Loader2, Star, BookOpen } from 'lucide-react';
 import { useJikan } from '@/hooks/useJikan';
 import { Button } from '@/components/ui/button';
 
-export default function MangaDetailModal({ mangaId, onClose, onSelectCharacter }) {
+export default function MangaDetailModal({ mangaId, onClose, onSelectCharacter, onSelectManga }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [details, setDetails] = useState(null);
   const [characters, setCharacters] = useState([]);
@@ -112,8 +112,19 @@ export default function MangaDetailModal({ mangaId, onClose, onSelectCharacter }
       closedby="any"
       aria-labelledby="manga-dialog-title"
       onClose={handleClose}
-      className="m-auto max-h-[85vh] w-[92%] max-w-[900px] rounded-3xl border bg-card text-card-foreground shadow-2xl overflow-y-auto animate-fade-in p-0 outline-none backdrop:backdrop-blur-md backdrop:bg-background/80"
+      className="fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none border-0 bg-background text-foreground overflow-y-auto animate-fade-in p-0 outline-none m-0 z-50 backdrop:bg-transparent"
     >
+      {/* Floating Close Button */}
+      <Button 
+        onClick={handleClose} 
+        variant="outline"
+        size="icon"
+        className="fixed top-6 right-6 sm:right-10 rounded-full w-10 h-10 bg-background/70 border backdrop-blur-md text-foreground cursor-pointer hover:rotate-90 hover:scale-105 transition-all duration-300 z-50 shadow-md"
+        aria-label="Close Modal"
+      >
+        <X size={20} />
+      </Button>
+
       {loading && !details ? (
         <div className="flex flex-col items-center justify-center min-h-[350px] gap-4">
           <Loader2 className="animate-spin text-primary" size={40} />
@@ -125,29 +136,19 @@ export default function MangaDetailModal({ mangaId, onClose, onSelectCharacter }
           <Button onClick={handleClose}>Close Dialog</Button>
         </div>
       ) : details ? (
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-screen">
           {/* Header Banner Background */}
-          <div className="relative h-44 overflow-hidden">
+          <div className="relative h-72 overflow-hidden">
             <img
               src={details.images?.jpg?.large_image_url || details.images?.jpg?.image_url}
               alt=""
               className="w-full h-full object-cover blur-[12px] brightness-[0.35] scale-110"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent"></div>
-
-            <Button
-              onClick={handleClose}
-              variant="outline"
-              size="icon"
-              className="absolute top-4 right-4 rounded-full w-9 h-9 bg-background/50 border-muted text-foreground cursor-pointer hover:rotate-90 transition-transform duration-300 z-50"
-              aria-label="Close Modal"
-            >
-              <X size={18} />
-            </Button>
+            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
           </div>
 
           {/* Main Info Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] px-6 sm:px-10 pb-10 gap-8 -mt-20 relative z-10">
+          <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-[250px_1fr] px-6 sm:px-10 pb-16 gap-10 -mt-24 relative z-10">
             {/* Left Column: Poster & Metadata */}
             <div className="flex flex-col gap-4">
               <img
@@ -334,19 +335,7 @@ export default function MangaDetailModal({ mangaId, onClose, onSelectCharacter }
                             key={recManga.mal_id}
                             className="group flex flex-col gap-2 cursor-pointer"
                             onClick={() => {
-                              setDetails(null);
-                              setCharacters([]);
-                              setRecommendations([]);
-                              setActiveTab('overview');
-                              request(`/manga/${recManga.mal_id}/full`).then(res => {
-                                if (res && res.data) setDetails(res.data);
-                              });
-                              request(`/manga/${recManga.mal_id}/characters`).then(res => {
-                                if (res && res.data) setCharacters(res.data.slice(0, 8));
-                              });
-                              request(`/manga/${recManga.mal_id}/recommendations`).then(res => {
-                                if (res && res.data) setRecommendations(res.data.slice(0, 6));
-                              });
+                              onSelectManga(recManga.mal_id);
                             }}
                           >
                             <div className="relative overflow-hidden rounded-xl aspect-[3/4] border bg-muted">

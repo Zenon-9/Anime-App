@@ -318,6 +318,7 @@ function MainApp() {
         animeId={selectedAnimeId}
         onClose={() => setSelectedAnimeId(null)}
         onSelectCharacter={setSelectedCharacterId}
+        onSelectAnime={setSelectedAnimeId}
       />
 
       {/* Global Character Details Modal dialog */}
@@ -343,6 +344,7 @@ function MainApp() {
         mangaId={selectedMangaId}
         onClose={() => setSelectedMangaId(null)}
         onSelectCharacter={setSelectedCharacterId}
+        onSelectManga={setSelectedMangaId}
       />
 
       {/* Footer Branding */}
